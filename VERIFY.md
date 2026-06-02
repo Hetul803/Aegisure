@@ -7,9 +7,8 @@ Implemented and tested locally without external credentials:
 1. Clean launch repo exists at `Aegisure/` with only runtime/build/test files for the GitHub-first product.
 2. Python package lives at `packages/aegisure`, builds to wheel and sdist, and exposes the installed `aegisure` CLI.
 3. CLI help works from:
-   - root editable install: `pip install -e . && aegisure --help`
-   - editable install: `aegisure --help`
-   - wheel install in a fresh venv: `/tmp/aegisure-wheel-test/bin/aegisure --help`
+   - editable install: `pip install -e packages/aegisure && aegisure --help`
+   - wheel install in a fresh venv: `/tmp/aegisure_pkg_venv/bin/aegisure --help`
 4. Static scanner is fully LLM-free:
    - secret detection
    - destructive shell detection
@@ -31,10 +30,10 @@ Implemented and tested locally without external credentials:
    - protected dashboard/API routes require auth
    - `/github/webhook` verifies HMAC signatures
    - waitlist and pledge require auth and record intent without charging
-7. Dashboard builds successfully and reads live backend endpoints instead of sample risk/provenance/attribution data.
+7. Dashboard builds successfully and reads live backend endpoints instead of sample risk/provenance/attribution data. The UI has a polished landing page, Supabase auth page, guided onboarding, cohesive app shell, dark/light theme toggle, BYOK settings form, and improved empty states.
 8. Tests:
    - `pytest`: 35 passed
-   - `pnpm web:test`: 6 passed across 4 files
+   - `pnpm web:test`: 10 passed across 5 files
    - `pnpm web:build`: passed
    - `python -m build packages/aegisure`: passed
    - fresh venv wheel install + `aegisure --help`: passed
@@ -79,6 +78,7 @@ Required vars:
 
 ```bash
 AEGISURE_GITHUB_APP_ID=...
+AEGISURE_GITHUB_APP_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
 AEGISURE_GITHUB_APP_PRIVATE_KEY_PATH=/secure/path/private-key.pem
 AEGISURE_GITHUB_WEBHOOK_SECRET=...
 ```
@@ -114,6 +114,7 @@ Railway backend:
 DATABASE_URL=
 SUPABASE_JWT_SECRET=
 AEGISURE_GITHUB_APP_ID=
+AEGISURE_GITHUB_APP_PRIVATE_KEY=
 AEGISURE_GITHUB_APP_PRIVATE_KEY_PATH=
 AEGISURE_GITHUB_WEBHOOK_SECRET=
 AEGISURE_CORS_ORIGINS=https://your-vercel-domain
@@ -139,7 +140,7 @@ pytest
 # 35 passed
 
 pnpm web:test
-# 6 passed
+# 10 passed
 ```
 
 The true launch-product parity target is lower than the source repo's full 262-ish count because the old count included retired Mac desktop companion tests, native/voice/desktop shell tests, local model setup, mobile/ambient adapters, and consumer Mac-download/licensing tests that are explicitly excluded from the GitHub-first Aegisure repo.
@@ -150,7 +151,11 @@ The true launch-product parity target is lower than the source repo's full 262-i
 Cannot connect to the Docker daemon at unix:///Users/hetulpatel/.docker/run/docker.sock
 ```
 
-The migration files are present and target Postgres/pgvector; run them once Docker or Supabase is available.
+The migration files compile and render offline Postgres SQL. Offline SQL generation confirmed `CREATE EXTENSION IF NOT EXISTS vector`, `embedding vector(1536)`, and Row-Level Security statements for workspace-scoped tables. Run the real migration once Docker or Supabase is available:
+
+```bash
+DATABASE_URL="postgresql+psycopg://postgres:[YOUR_PASSWORD]@db.[PROJECT_REF].supabase.co:5432/postgres" alembic upgrade head
+```
 
 3. The live GitHub App was not tested against GitHub because real GitHub App credentials were not provided in this session. The flow is tested end to end with a fake GitHub client and will use the real GitHub API once env vars are set.
 
@@ -196,6 +201,7 @@ alembic upgrade head
 
 ```bash
 AEGISURE_GITHUB_APP_ID=...
+AEGISURE_GITHUB_APP_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
 AEGISURE_GITHUB_APP_PRIVATE_KEY_PATH=/secure/path/github-app-private-key.pem
 AEGISURE_GITHUB_WEBHOOK_SECRET=...
 ```

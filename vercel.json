@@ -1,0 +1,7 @@
+{
+  "buildCommand": "pnpm --filter aegisure-web build",
+  "devCommand": "pnpm --filter aegisure-web dev",
+  "framework": "nextjs",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "outputDirectory": "apps/web/.next"
+}

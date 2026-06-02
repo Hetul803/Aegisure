@@ -72,3 +72,13 @@ For TestPyPI rehearsal:
 ```bash
 python -m twine upload --repository testpypi dist/*
 ```
+
+## 2026-06-02 UI And Deploy Polish
+
+- Upgraded the web dashboard with the existing Next.js, Tailwind, shadcn-style local primitives, and `lucide-react`. No heavy UI dependency was added because the product only needed a cohesive design system, not another component framework.
+- Implemented dark/light theming through CSS variables and a small localStorage-backed toggle. Dark is the default because the product is a code-review/control plane, but light mode remains usable.
+- Kept live backend data wiring intact on dashboard pages. Empty states explain the next setup step instead of showing sample records.
+- Supabase deployment uses the classic JWT-style env names: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_JWT_SECRET`. The codebase intentionally does not mix in the newer `sb_publishable_` / `sb_secret_` naming.
+- Railway is configured from the repo root with `requirements.txt`, `runtime.txt`, and `Procfile`. The GitHub App private key should be stored as `AEGISURE_GITHUB_APP_PRIVATE_KEY` in hosted env; `AEGISURE_GITHUB_APP_PRIVATE_KEY_PATH` remains a local-development fallback.
+- Vercel is configured from the repo root with `vercel.json` because the pnpm workspace lockfile is root-level. The config builds the `aegisure-web` package and outputs `apps/web/.next`.
+- The launch migration now creates runtime repo/PR status columns and uses a real Postgres `vector(1536)` column for memory timeline embeddings. SQLite remains the CLI/local path and does not need pgvector.

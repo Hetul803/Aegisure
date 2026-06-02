@@ -13,6 +13,10 @@ const config: Config = {
         "muted-foreground": "hsl(var(--muted-foreground))",
         card: "hsl(var(--card))",
         "card-foreground": "hsl(var(--card-foreground))",
+        accent: "hsl(var(--accent))",
+        "accent-foreground": "hsl(var(--accent-foreground))",
+        warning: "hsl(var(--warning))",
+        danger: "hsl(var(--danger))",
       },
       borderRadius: {
         lg: "0.5rem",

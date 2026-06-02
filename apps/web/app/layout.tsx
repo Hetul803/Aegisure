@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Aegisure — Trust layer for AI coding agents",
-  description: "Aegisure builds project Constitutions, analyzes AI-generated diffs, scores risk, exports cross-agent memory, and generates repair prompts.",
+  title: "Aegisure — Control and audit plane for AI coding agents",
+  description: "See, govern, and remember everything every AI coding agent does across vendors.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <body>{children}</body>
     </html>
   );

@@ -51,8 +51,13 @@ def upgrade() -> None:
         sa.Column("workspace_id", sa.String(), nullable=False, index=True),
         sa.Column("github_id", sa.BigInteger(), nullable=False),
         sa.Column("full_name", sa.String(), nullable=False),
+        sa.Column("name", sa.String()),
         sa.Column("default_branch", sa.String(), nullable=False, server_default="main"),
         sa.Column("private", sa.Boolean(), nullable=False, server_default=sa.text("false")),
+        sa.Column("risk", sa.Integer(), nullable=False, server_default="0"),
+        sa.Column("status", sa.String(), nullable=False, server_default="connected"),
+        sa.Column("open_prs", sa.Integer(), nullable=False, server_default="0"),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()")),
     )
     op.create_table(
         "github_pull_requests",
@@ -63,6 +68,9 @@ def upgrade() -> None:
         sa.Column("title", sa.String(), nullable=False),
         sa.Column("head_sha", sa.String(), nullable=False),
         sa.Column("state", sa.String(), nullable=False),
+        sa.Column("risk_score", sa.Integer(), nullable=False, server_default="0"),
+        sa.Column("verdict", sa.String(), nullable=False, server_default="pass"),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()")),
     )
     for table in [
         "diff_analyses",
@@ -108,19 +116,27 @@ def upgrade() -> None:
         sa.Column("payload", sa.JSON(), nullable=False, server_default=sa.text("'{}'::jsonb")),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()")),
     )
-    op.create_table(
-        "memory_timeline_events",
-        sa.Column("event_id", sa.String(), primary_key=True),
-        sa.Column("workspace_id", sa.String(), nullable=False, index=True),
-        sa.Column("repository_id", sa.String(), nullable=False, index=True),
-        sa.Column("agent", sa.String(), nullable=False, index=True),
-        sa.Column("event_type", sa.String(), nullable=False),
-        sa.Column("summary", sa.String(), nullable=False),
-        sa.Column("payload", sa.JSON(), nullable=False, server_default=sa.text("'{}'::jsonb")),
-        sa.Column("embedding", sa.Text()),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()")),
+    op.execute(
+        """
+        CREATE TABLE memory_timeline_events (
+            event_id VARCHAR PRIMARY KEY,
+            workspace_id VARCHAR NOT NULL,
+            repository_id VARCHAR NOT NULL,
+            agent VARCHAR NOT NULL,
+            event_type VARCHAR NOT NULL,
+            summary VARCHAR NOT NULL,
+            payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+            embedding vector(1536),
+            created_at TIMESTAMPTZ DEFAULT now()
+        )
+        """
     )
+    op.create_index("ix_memory_timeline_events_workspace_id", "memory_timeline_events", ["workspace_id"])
+    op.create_index("ix_memory_timeline_events_repository_id", "memory_timeline_events", ["repository_id"])
+    op.create_index("ix_memory_timeline_events_agent", "memory_timeline_events", ["agent"])
     workspace_tables = [
+        "workspaces",
+        "workspace_members",
         "github_installations",
         "github_repositories",
         "github_pull_requests",

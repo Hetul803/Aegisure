@@ -1,0 +1,17 @@
+{
+  "name": "aegisure-launch",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "web:dev": "pnpm --filter aegisure-web dev",
+    "web:build": "pnpm --filter aegisure-web build",
+    "web:test": "pnpm --filter aegisure-web test",
+    "backend:dev": "uvicorn aegisure_backend.main:app --app-dir apps/backend/src --reload",
+    "test": "pytest && pnpm web:test",
+    "build": "pnpm web:build && python -m build packages/aegisure",
+    "verify": "pytest && pnpm web:test && pnpm web:build"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

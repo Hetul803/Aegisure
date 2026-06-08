@@ -31,7 +31,7 @@ def test_export_content_targets_each_agent_style(tmp_path: Path):
     constitution = scan_repository(tmp_path)
     exports = build_memory_exports(constitution)
 
-    assert "AEGISURE_CONSTITUTION_JSON" in exports["AEGIS.md"]
+    assert "AEGISURE_CONSTITUTION_JSON" in exports["Aegisure.md"]
     assert "Claude Code Memory" in exports["CLAUDE.md"]
     assert "GitHub Copilot Instructions" in exports[".github/copilot-instructions.md"]
 
@@ -62,7 +62,7 @@ def test_attribution_ledger_records_agent_per_file(tmp_path: Path):
 
     assert rows[0]["path"] == "a.py"
     assert rows[0]["agent"] == "codex"
-    assert infer_agent(commit_message="AURA-Agent: claude-code") == "claude-code"
+    assert infer_agent(commit_message="Aegisure-Agent: claude-code") == "claude-code"
 
 
 def test_cli_export_and_commit_capture_provenance(tmp_path: Path):

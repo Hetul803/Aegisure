@@ -9,6 +9,7 @@ import yaml
 
 from .diff_parser import ParsedDiff, parse_unified_diff
 from .diff_risk import DiffRiskReport, analyze_diff
+from .policy_config import load_aegisure_policy
 
 
 @dataclass(frozen=True)
@@ -106,6 +107,10 @@ def default_policy_yaml() -> str:
     decision: block
     severity: critical
 """
+
+
+def policy_yaml_for_repo(repo_path: str) -> str:
+    return load_aegisure_policy(repo_path).to_policy_yaml()
 
 
 def policy_json(evaluation: PolicyEvaluation) -> str:

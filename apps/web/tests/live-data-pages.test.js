@@ -14,7 +14,12 @@ describe('live data dashboard pages', () => {
 
   it('audit page includes grounded audit chatbot language', () => {
     const audit = fs.readFileSync(path.resolve(process.cwd(), 'app/audit/page.tsx'), 'utf-8');
-    expect(audit).toContain('Audit chatbot');
-    expect(audit).toContain('grounded only in your workspace records');
+    const panel = fs.readFileSync(path.resolve(process.cwd(), 'components/audit-chat-panel.tsx'), 'utf-8');
+    expect(audit).toContain('AuditChatPanel');
+    expect(audit).toContain('backendGet<LedgerResponse>("/attribution"');
+    expect(audit).toContain('backendGet<LedgerResponse>("/provenance"');
+    expect(audit).toContain('backendGet<RiskReportsResponse>("/risk-reports"');
+    expect(panel).toContain('It is not a general chatbot');
+    expect(panel).toContain('/audit/chat');
   });
 });

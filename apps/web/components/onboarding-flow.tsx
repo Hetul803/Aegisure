@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, CheckCircle2, Github, GitPullRequestArrow, ScrollText } from "lucide-react";
+import { ArrowRight, CheckCircle2, Github, GitPullRequestArrow, LayoutDashboard, ScrollText } from "lucide-react";
 
 const steps = [
   {
@@ -20,9 +20,14 @@ const steps = [
     icon: CheckCircle2,
   },
   {
-    title: "Generate AEGIS.md",
+    title: "Generate Aegisure.md",
     detail: "Aegisure creates the first Constitution and exports aligned agent memory files.",
     icon: ScrollText,
+  },
+  {
+    title: "Land on dashboard",
+    detail: "Open the first Risk Report, copy a repair prompt, or ask the audit chatbot over real workspace records.",
+    icon: LayoutDashboard,
   },
 ];
 
@@ -69,10 +74,11 @@ export function OnboardingFlow() {
                   {active === 1 && "Set your GitHub App webhook to the Railway backend. Aegisure will verify signatures and avoid duplicate deliveries."}
                   {active === 2 && "Install on a single repo first. When a PR opens, Aegisure creates the first live risk report."}
                   {active === 3 && "Run `aegisure init` locally or generate from the dashboard when repo context is available."}
+                  {active === 4 && "The dashboard stays empty until live backend records arrive, then shows reports, attribution, provenance, and audit data."}
                 </p>
               </div>
               <div className="mt-8 flex flex-wrap gap-3">
-                <a href={active === 0 ? "/auth" : "/repos"} className="smooth-pop inline-flex h-10 items-center gap-2 rounded-md bg-accent px-4 text-sm font-medium text-accent-foreground hover:bg-accent/90">
+                <a href={active === 0 ? "/auth" : active === 4 ? "/dashboard" : "/repos"} className="smooth-pop inline-flex h-10 items-center gap-2 rounded-md bg-accent px-4 text-sm font-medium text-accent-foreground hover:bg-accent/90">
                   Continue
                   <ArrowRight className="h-4 w-4" />
                 </a>

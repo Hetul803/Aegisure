@@ -42,8 +42,8 @@ Implemented and tested locally without external credentials:
    - Old Aegisure web product tests restored or ported: 3 files.
    - Dropped desktop/consumer-only tests remain excluded intentionally.
 10. `python -m build packages/aegisure` produced:
-   - `packages/aegisure/dist/aegisure-0.1.0.tar.gz`
-   - `packages/aegisure/dist/aegisure-0.1.0-py3-none-any.whl`
+   - `packages/aegisure/dist/aegisure-0.2.0.tar.gz`
+   - `packages/aegisure/dist/aegisure-0.2.0-py3-none-any.whl`
 
 ## B. NEEDS REAL CREDENTIALS
 

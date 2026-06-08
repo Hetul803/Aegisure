@@ -1,4 +1,4 @@
-import { BrainCircuit, GitBranch, GitPullRequestArrow, History, ScrollText, Settings, ShieldCheck, Wrench } from "lucide-react";
+import { BrainCircuit, GitBranch, GitPullRequestArrow, History, MessageSquareText, ScrollText, Settings, ShieldCheck, Wrench } from "lucide-react";
 
 export const navItems = [
   { key: "dashboard", href: "/dashboard", label: "Risk Reports", icon: GitPullRequestArrow },
@@ -7,10 +7,11 @@ export const navItems = [
   { key: "attribution", href: "/attribution", label: "Attribution", icon: History },
   { key: "provenance", href: "/provenance", label: "Provenance", icon: ScrollText },
   { key: "policies", href: "/policies", label: "Policies", icon: ShieldCheck },
+  { key: "audit", href: "/audit", label: "Audit", icon: MessageSquareText },
   { key: "settings", href: "/settings", label: "Settings", icon: Settings },
 ];
 
-export const agentExports = ["AEGIS.md", "AGENTS.md", "CLAUDE.md", ".cursorrules", ".clinerules", ".github/copilot-instructions.md"];
+export const agentExports = ["Aegisure.md", "AGENTS.md", "CLAUDE.md", ".cursorrules", ".clinerules", ".github/copilot-instructions.md"];
 
 export const heroActions = [
   { title: "Risk scanning", detail: "Secrets, auth, payment, deploy, dependency, test-removal, and destructive-command checks." },

@@ -1,5 +1,6 @@
 .env
 .env.local
+*.pem
 .venv/
 venv/
 __pycache__/

@@ -1,8 +1,13 @@
+import { AuditChatPanel } from "../../components/audit-chat-panel";
 import { AppShell, Badge, Card, EmptyState, PageHeader, StatCard } from "../../components/ui";
-import { backendGet, type AuditResponse } from "../../lib/api";
+import { backendGet, type AuditResponse, type LedgerResponse, type RiskReportsResponse } from "../../lib/api";
 
 export default async function AuditPage() {
   const data = await backendGet<AuditResponse>("/audit", { events: [] });
+  const attribution = await backendGet<LedgerResponse>("/attribution", { records: [] });
+  const provenance = await backendGet<LedgerResponse>("/provenance", { records: [] });
+  const risk = await backendGet<RiskReportsResponse>("/risk-reports", { reports: [] });
+  const groundedRecords = data.events.length + attribution.records.length + provenance.records.length + risk.reports.length;
   return (
     <AppShell current="audit">
       <PageHeader eyebrow="Audit" title="Every approval, block, repair, and export.">
@@ -11,7 +16,7 @@ export default async function AuditPage() {
       <div className="space-y-6 p-6 md:p-10">
         <div className="grid gap-4 md:grid-cols-3">
           <StatCard label="Audit events" value={data.events.length} />
-          <StatCard label="Grounding" value="Workspace only" tone="good" />
+          <StatCard label="Grounded records" value={groundedRecords} tone={groundedRecords ? "good" : "neutral"} />
           <StatCard label="LLM mode" value="Capped or BYOK" />
         </div>
         <Card>
@@ -36,14 +41,7 @@ export default async function AuditPage() {
             </div>
           )}
         </Card>
-        <Card>
-          <Badge>Audit chatbot</Badge>
-          <h2 className="mt-3 text-lg font-semibold tracking-tight">Ask grounded questions over your audit data</h2>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">Examples: “what did Codex change today?”, “which agent touched auth this week?”, “show risky PRs still open.” Answers are grounded only in your workspace records and follow LLM caps/BYOK settings.</p>
-          <div className="mt-5 rounded-xl border border-border bg-background/70 p-4 text-sm text-muted-foreground">
-            Connect a repository to activate workspace-grounded answers. General chatbot behavior is intentionally disabled.
-          </div>
-        </Card>
+        <AuditChatPanel audit={data} attribution={attribution} provenance={provenance} risk={risk} />
       </div>
     </AppShell>
   );

@@ -89,7 +89,7 @@ async def process_pull_request_webhook(
     pr = event.pull_request
     diff_text = await client.fetch_pull_request_diff(owner=repo.owner, repo=repo.name, number=pr.number, installation_token=token)
     parsed = parse_unified_diff(diff_text)
-    # GitHub flow can run without a local checkout; repo-local AEGIS.md is loaded later when fetched/cached.
+    # GitHub flow can run without a local checkout; repo-local Aegisure.md is loaded later when fetched/cached.
     report = analyze_diff(parsed)
     policy_eval = evaluate_policy(parsed, policy_text=policy_yaml or default_policy_yaml(), risk_report=report)
     if not policy_eval.passed and report.verdict == "pass":

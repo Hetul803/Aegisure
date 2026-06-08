@@ -27,7 +27,7 @@ def test_pivot_diff_analyze_authenticated(monkeypatch):
  print("ok")
 +password = "hunter22222"
 """
-    res = client.post("/diffs/analyze", json={"diff": diff}, headers={"authorization": "Bearer dev-token", "x-aura-workspace": "ws_1"})
+    res = client.post("/diffs/analyze", json={"diff": diff}, headers={"authorization": "Bearer dev-token", "x-aegisure-workspace": "ws_1"})
     body = res.json()
 
     assert res.status_code == 200

@@ -10,7 +10,7 @@ aegisure export
 
 Show:
 
-- `AEGIS.md`
+- `Aegisure.md`
 - `AGENTS.md`
 - `CLAUDE.md`
 - `.cursorrules`

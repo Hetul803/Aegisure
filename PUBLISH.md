@@ -7,6 +7,7 @@ Do not store a PyPI token in this repository.
 ```bash
 cd packages/aegisure
 python -m pip install --upgrade build twine
+rm -rf dist
 python -m build
 python -m twine check dist/*
 ```
@@ -26,3 +27,5 @@ python -m twine upload dist/*
 ```
 
 Use username `__token__` and paste your PyPI token in your own terminal.
+
+Current package version prepared in this repo: `0.2.0`.

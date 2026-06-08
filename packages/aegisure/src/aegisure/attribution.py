@@ -43,7 +43,7 @@ def infer_agent(*, commit_message: str = "", pr_body: str = "", explicit_agent: 
     if explicit_agent:
         return explicit_agent
     text = f"{commit_message}\n{pr_body}".lower()
-    trailer = re.search(r"aura-agent:\s*([a-z0-9_.-]+)", text)
+    trailer = re.search(r"aegisure-agent:\s*([a-z0-9_.-]+)", text)
     if trailer:
         return trailer.group(1)
     for agent, needles in KNOWN_AGENTS.items():

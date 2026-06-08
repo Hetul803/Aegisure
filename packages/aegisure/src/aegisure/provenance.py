@@ -8,10 +8,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 
-# Keep the original trailer protocol stable so pre-rebrand provenance remains readable.
-TRAILER_AGENT = "AURA-Agent"
-TRAILER_PROMPT_HASH = "AURA-Prompt-SHA256"
-TRAILER_PROMPT = "AURA-Prompt"
+TRAILER_AGENT = "Aegisure-Agent"
+TRAILER_PROMPT_HASH = "Aegisure-Prompt-SHA256"
+TRAILER_PROMPT = "Aegisure-Prompt"
 
 
 @dataclass(frozen=True)
@@ -73,7 +72,7 @@ def parse_provenance_text(text: str) -> ProvenanceRecord | None:
 
 def record_git_note(repo_path: str | Path, commit_sha: str, record: ProvenanceRecord) -> bool:
     proc = subprocess.run(
-        ["git", "notes", "--ref", "aura/provenance", "add", "-f", "-m", json.dumps(record.to_dict(), sort_keys=True), commit_sha],
+        ["git", "notes", "--ref", "aegisure/provenance", "add", "-f", "-m", json.dumps(record.to_dict(), sort_keys=True), commit_sha],
         cwd=Path(repo_path).resolve(),
         capture_output=True,
         text=True,

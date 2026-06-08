@@ -18,6 +18,8 @@ describe('pivot dashboard scaffold', () => {
       'policies/page.tsx',
       'audit/page.tsx',
       'settings/page.tsx',
+      'docs/page.tsx',
+      'pricing/page.tsx',
     ];
     for (const file of required) {
       expect(fs.existsSync(path.join(appRoot, file))).toBe(true);
@@ -26,8 +28,11 @@ describe('pivot dashboard scaffold', () => {
 
   it('landing page names the pivot promise', () => {
     const page = fs.readFileSync(path.join(appRoot, 'page.tsx'), 'utf-8');
-    expect(page).toContain('control and audit plane for AI coding agents');
-    expect(page).toContain('See, govern, and remember everything every agent does');
+    expect(page).toContain('One constitution. Every agent. Safer commits.');
+    expect(page).toContain('see, govern, and remember everything every agent does');
+    expect(page).toContain('pip install aegisure');
     expect(page).toContain('No card collection');
+    expect(page).toContain('href="/docs"');
+    expect(page).toContain('href="/pricing"');
   });
 });

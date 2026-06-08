@@ -2,20 +2,20 @@
 
 ## Clean Launch Repo
 
-- Created this repository as a new local git repo at `Aegisure/` and copied only the GitHub-first launch product from the old AURA desktop-companion repo.
+- Created this repository as a new local git repo at `Aegisure/` and copied only the GitHub-first launch product from the old desktop-companion repo.
 - Kept runtime code under:
   - `apps/backend` for FastAPI, dashboard API, auth, GitHub webhook, and hosted data.
   - `apps/web` for the Next.js dashboard.
   - `packages/aegisure` for the installable Python package and CLI.
   - `migrations` for Alembic/Postgres/Supabase schema.
-- Excluded legacy consumer-desktop code: Electron shell, voice/speech/native macOS helpers, mobile/ambient/home/car adapters, OS automation, Mac packaging/notarization, generated artifacts, desktop tests, and old AURA marketing material. Those belong in the old repo history, not the launch repo.
+- Excluded legacy consumer-desktop code: Electron shell, voice/speech/native macOS helpers, mobile/ambient/home/car adapters, OS automation, Mac packaging/notarization, generated artifacts, desktop tests, and old marketing material. Those belong in the old repo history, not the launch repo.
 - Excluded old top-level items and reasons:
   - `apps/desktop`: Electron desktop companion, overlay, native helpers, release assets, and desktop tests are outside the GitHub-first product.
   - `apps/backend/.venv`, `.pytest_cache`, fixtures tied to the desktop product: generated/local-only or legacy test data.
   - `apps/web/.next`, `apps/web/node_modules`, `apps/desktop/node_modules`, `apps/desktop/release`, `apps/desktop/dist*`: build artifacts and vendored dependencies.
   - `packages/shared`: desktop/shared UI-era package not required by the GitHub App, CLI, or dashboard.
   - `scripts` for Mac packaging, license generation, notarization, clean-Mac QA, desktop reset, and desktop alpha checks: consumer-desktop launch tooling, not Phase 1 developer-tool runtime.
-  - `start-aura.sh`, `start-aura.ps1`, `start-aegisure.sh`: desktop/dev-launch scripts from the old app.
+  - Old desktop/dev-launch scripts from the prior app were excluded.
   - `docs` and `config` that described the Mac companion, app signing, licensing, voice, local-model setup, or consumer launch: not relevant to the pivot launch repo.
   - `test_runs`: generated run artifacts.
 
@@ -28,9 +28,9 @@
 ## Compatibility
 
 - User-facing product/company name is Aegisure.
-- Canonical Constitution file is `AEGIS.md`.
+- Canonical Constitution file is `Aegisure.md`.
 - External agent files keep their real filenames: `AGENTS.md`, `CLAUDE.md`, `.cursorrules`, `.clinerules`, and `.github/copilot-instructions.md`.
-- The provenance trailer keys remain `AURA-Agent`, `AURA-Prompt-SHA256`, and `AURA-Prompt` so pre-rebrand commits are still readable. The git note namespace also remains `aura/provenance` for compatibility.
+- Provenance trailer keys use the Aegisure namespace: `Aegisure-Agent`, `Aegisure-Prompt-SHA256`, and `Aegisure-Prompt`. Git notes use `aegisure/provenance`.
 - New local sidecar files use `.aegisure/`.
 
 ## Static Core Versus LLM
@@ -82,3 +82,28 @@ python -m twine upload --repository testpypi dist/*
 - Railway is configured from the repo root with `requirements.txt`, `runtime.txt`, and `Procfile`. The GitHub App private key should be stored as `AEGISURE_GITHUB_APP_PRIVATE_KEY` in hosted env; `AEGISURE_GITHUB_APP_PRIVATE_KEY_PATH` remains a local-development fallback.
 - Vercel is configured from the repo root with `vercel.json` because the pnpm workspace lockfile is root-level. The config builds the `aegisure-web` package and outputs `apps/web/.next`.
 - The launch migration now creates runtime repo/PR status columns and uses a real Postgres `vector(1536)` column for memory timeline embeddings. SQLite remains the CLI/local path and does not need pgvector.
+
+## 2026-06-03 CLI Launch Polish
+
+- CLI scanning and Constitution generation now respect `.gitignore` through `git check-ignore --no-index`, then apply Aegisure's built-in ignore safety net for `.venv/`, `venv/`, `env/`, `node_modules/`, `.git/`, caches, build output, `site-packages/`, and macOS junk files.
+- `.aegisure/policy.yml` is the committed repo policy file. It can configure `ignore`, `protected_paths`, `approval_required`, and `block`. Ignore patterns merge with defaults by default; advanced users can remove or replace defaults with the documented `ignore.remove` / `ignore.replace` form.
+- `aegisure scan --changed --base <ref> --json` is the CLI-only GitHub Actions adoption path. It is intentionally separate from the hosted GitHub App flow.
+- `aegisure run` is only a git snapshot-and-scan session. It does not execute, wrap, intercept, or control an agent runtime. This boundary is intentional so Aegisure stays honest and safe while still giving users after-the-fact risk visibility.
+- `aegisure rewind last` is a git-based rollback helper built on `git revert`; it refuses dirty working trees and does not rewrite shared history.
+- Multi-agent attribution remains declared/captured. Exported rule files instruct agents to use `aegisure commit --agent ...`; Aegisure does not infer which agent wrote code from a diff.
+
+## 2026-06-03 Web UI And Audit Chatbot Polish
+
+- The marketing landing page now leads with "One constitution. Every agent. Safer commits." and uses a restrained faux-terminal product demonstration instead of decorative AI visuals. The terminal is pausable and becomes static under `prefers-reduced-motion`.
+- The shared web design system stays inside Tailwind, local shadcn-style primitives, and `lucide-react`; no heavy UI dependency was added.
+- The app dashboard intentionally does not reuse the landing animation. Logged-in surfaces stay dense, quiet, and data-first.
+- The audit chatbot is a grounded workspace-data interface, not a general chatbot. The audit page fetches audit events, attribution, provenance, and risk reports through existing backend endpoints, then the client panel calls the existing `/audit/chat` endpoint for LLM phrasing when auth and caps/BYOK allow it. Without LLM access, it still shows matched raw records and asks the user to add a BYOK key for natural-language answers.
+
+## 2026-06-08 CLI Safety Fixes
+
+- `aegisure export` preserves user-authored external agent files. Aegisure now writes generated instructions into a managed block between `<!-- AEGISURE:BEGIN -->` and `<!-- AEGISURE:END -->`, updating only that block on later exports. This prevents `.cursorrules`, `CLAUDE.md`, `AGENTS.md`, `.clinerules`, and Copilot instructions from being silently clobbered while keeping re-export idempotent. The canonical `Aegisure.md` remains Aegisure-managed.
+- Ignore handling now treats virtualenvs and vendored dependencies as path-segment realities, not exact directory names. Directories such as `.venv-aegisure/`, `venv-aegisure/`, any path containing `site-packages`, any path containing `node_modules`, caches, build output, and `*.egg-info` trees are unconditionally ignored even when tracked by git or missing from `.gitignore`.
+- `package.json` is no longer a default protected path. A normal manifest is too common to list as protected by default; teams can still protect it explicitly in `.aegisure/policy.yml`.
+- `aegisure doctor` uses the same shared repo-file ignore path as scan/repair/Constitution generation. Markdown/doc placeholder keys are downgraded to a warning instead of a hard failure, while real-looking secrets in source files still fail.
+- Secret detection is value-based rather than name-based. Environment references such as `process.env.OPENAI_API_KEY`, empty `.env.example` templates, config lookups, and token/key-shaped variable names do not fail doctor. Literal password assignments, real-looking provider tokens, private-key blocks, GitHub/AWS/Slack-style keys, and high-entropy assigned values remain true positives.
+- URL and asset identifiers are not credentials. Aegisure no longer treats long numeric/image IDs inside `http(s)://` URLs as secrets, and `.env.example` / `.env.sample` / `.env.template` / `.env.dist` files are treated as templates rather than hard-fail secret sources.

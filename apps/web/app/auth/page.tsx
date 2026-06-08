@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { AlertCircle, ArrowRight, Github, ShieldCheck } from "lucide-react";
+import { AlertCircle, ShieldCheck } from "lucide-react";
+import { GithubSignIn } from "../../components/github-sign-in";
 import { Badge, Button, Card } from "../../components/ui";
 import { ThemeToggle } from "../../components/theme-toggle";
 import { githubOAuthUrl, supabaseConfig } from "../../lib/supabase";
@@ -40,14 +41,10 @@ export default function AuthPage() {
           <Badge tone={cfg.configured ? "good" : "warn"}>{cfg.configured ? "Supabase ready" : "Supabase env missing"}</Badge>
           <h2 className="mt-5 text-3xl font-semibold tracking-tight">Sign in with GitHub</h2>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            Aegisure uses Supabase Auth to create your workspace and scope repos, PR reports, audit events, and BYOK settings.
+            Sign into the control and audit plane for your AI coding agents. Aegisure uses Supabase Auth to create your workspace and scope repos, PR reports, audit events, and BYOK settings.
           </p>
           {cfg.configured ? (
-            <a href={url} className="smooth-pop mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-accent px-4 text-sm font-medium text-accent-foreground hover:bg-accent/90">
-              <Github className="h-4 w-4" />
-              Continue with GitHub
-              <ArrowRight className="h-4 w-4" />
-            </a>
+            <GithubSignIn href={url} />
           ) : (
             <div className="mt-6 rounded-md border border-warning/30 bg-warning/10 p-4">
               <div className="flex items-center gap-2 text-sm font-medium text-amber-700 dark:text-amber-200">

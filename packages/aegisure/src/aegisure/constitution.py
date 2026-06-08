@@ -6,8 +6,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from .policy_config import filter_ignored_paths, iter_repo_files, load_aegisure_policy, matches_any, normalize_repo_path
 
-CONSTITUTION_FILENAME = "AEGIS.md"
+
+CONSTITUTION_FILENAME = "Aegisure.md"
 _JSON_START = "<!-- AEGISURE_CONSTITUTION_JSON"
 _JSON_END = "AEGISURE_CONSTITUTION_JSON -->"
 
@@ -75,10 +77,7 @@ def _language_from_suffix(path: Path) -> str | None:
 
 def _discover_languages(repo_path: Path) -> list[str]:
     counts: dict[str, int] = {}
-    ignored = {".git", "node_modules", "dist", "build", ".next", "venv", ".venv", "__pycache__"}
-    for path in repo_path.rglob("*"):
-        if not path.is_file() or any(part in ignored for part in path.parts):
-            continue
+    for path in iter_repo_files(repo_path):
         lang = _language_from_suffix(path)
         if lang:
             counts[lang] = counts.get(lang, 0) + 1
@@ -99,7 +98,8 @@ def _package_files(repo_path: Path) -> list[str]:
         "Dockerfile",
         "docker-compose.yml",
     ]
-    return sorted(str(path.relative_to(repo_path)) for name in names for path in repo_path.rglob(name) if ".git" not in path.parts and "node_modules" not in path.parts)
+    files = iter_repo_files(repo_path)
+    return sorted(str(path.relative_to(repo_path)) for path in files if path.name in names)
 
 
 def _test_commands(repo_path: Path) -> list[str]:
@@ -109,7 +109,7 @@ def _test_commands(repo_path: Path) -> list[str]:
     for key in ["test", "lint", "typecheck", "build"]:
         if key in scripts:
             commands.append(f"pnpm {key}")
-    for package_path in repo_path.rglob("package.json"):
+    for package_path in [path for path in iter_repo_files(repo_path) if path.name == "package.json"]:
         if package_path == repo_path / "package.json" or "node_modules" in package_path.parts:
             continue
         data = _json_file(package_path)
@@ -120,33 +120,23 @@ def _test_commands(repo_path: Path) -> list[str]:
                 commands.append(f"pnpm --dir {rel} {key}")
     if (repo_path / "pyproject.toml").exists() or (repo_path / "pytest.ini").exists():
         commands.append("pytest")
-    for pyproject in repo_path.rglob("pyproject.toml"):
+    for pyproject in [path for path in iter_repo_files(repo_path) if path.name == "pyproject.toml"]:
         if pyproject != repo_path / "pyproject.toml" and ".venv" not in pyproject.parts:
             commands.append(f"cd {pyproject.parent.relative_to(repo_path)} && pytest")
     return sorted(dict.fromkeys(commands))
 
 
 def _protected_paths(repo_path: Path) -> list[str]:
-    candidates = [
-        ".env",
-        ".env.local",
-        ".github/workflows/",
-        "infra/",
-        "migrations/",
-        "alembic/",
-        "schema.sql",
-        "package.json",
-        "pyproject.toml",
-        "requirements.txt",
-        "Dockerfile",
-        "docker-compose.yml",
-    ]
-    protected = [item for item in candidates if (repo_path / item.rstrip("/")).exists()]
-    for path in repo_path.rglob("*"):
-        rel = str(path.relative_to(repo_path))
+    policy = load_aegisure_policy(repo_path)
+    protected = []
+    files = iter_repo_files(repo_path, policy)
+    rel_files = {normalize_repo_path(path.relative_to(repo_path)) for path in files}
+    for pattern in policy.protected_paths:
+        if any(matches_any(rel, [pattern]) for rel in rel_files):
+            protected.append(pattern)
+    for path in files:
+        rel = normalize_repo_path(path.relative_to(repo_path))
         if re.search(r"(?i)(payment|billing|stripe|auth|login|oauth|permission|policy|migration)", rel):
-            if path.is_dir():
-                rel += "/"
             protected.append(rel)
     return sorted(dict.fromkeys(protected))[:60]
 
@@ -183,7 +173,7 @@ def scan_repository(repo_path: str | Path) -> Constitution:
             "Deleting tests, weakening CORS, adding risky dependencies, or changing CI requires human review.",
             "Shell commands that are destructive or pipe remote scripts into a shell are blocked.",
         ],
-        memory_exports=["AEGIS.md", "AGENTS.md", "CLAUDE.md", ".cursorrules", ".clinerules", ".github/copilot-instructions.md"],
+        memory_exports=["Aegisure.md", "AGENTS.md", "CLAUDE.md", ".cursorrules", ".clinerules", ".github/copilot-instructions.md"],
     )
 
 
@@ -235,13 +225,15 @@ def write_constitution(repo_path: str | Path, *, overwrite: bool = False) -> Pat
 
 
 def load_constitution(repo_path: str | Path) -> Constitution | None:
-    path = Path(repo_path).resolve() / CONSTITUTION_FILENAME
+    repo = Path(repo_path).resolve()
+    path = repo / CONSTITUTION_FILENAME
     text = _read_text(path)
     if not text or _JSON_START not in text or _JSON_END not in text:
         return None
     try:
         payload = text.split(_JSON_START, 1)[1].split(_JSON_END, 1)[0].strip()
         data = json.loads(payload)
+        data["protected_paths"] = filter_ignored_paths(repo, data.get("protected_paths", []))
         return Constitution(**data)
     except Exception:
         return None
@@ -262,7 +254,7 @@ def check_constitution_violations(changed_paths: list[str], constitution: Consti
                     "category": "constitution_violation",
                     "severity": "high",
                     "path": changed,
-                    "explanation": f"`{changed}` is protected by AEGIS.md and needs human review.",
+                    "explanation": f"`{changed}` is protected by Aegisure.md and needs human review.",
                 })
                 break
     return findings

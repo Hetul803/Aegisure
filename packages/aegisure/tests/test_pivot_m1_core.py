@@ -54,7 +54,7 @@ def test_constitution_generation_round_trips(tmp_path: Path):
     target = write_constitution(tmp_path)
     loaded = load_constitution(tmp_path)
 
-    assert target.name == "AEGIS.md"
+    assert target.name == "Aegisure.md"
     assert constitution.repo_name == tmp_path.name
     assert "TypeScript" in constitution.languages
     assert "pnpm test" in constitution.test_commands
@@ -77,7 +77,7 @@ def test_cli_init_and_scan_local_repo(tmp_path: Path):
     scan_result = runner.invoke(app, ["scan", "--path", str(tmp_path), "--json"])
 
     assert init_result.exit_code == 0
-    assert (tmp_path / "AEGIS.md").exists()
+    assert (tmp_path / "Aegisure.md").exists()
     assert scan_result.exit_code == 1
     payload = json.loads(scan_result.stdout)
     assert payload["verdict"] == "block"

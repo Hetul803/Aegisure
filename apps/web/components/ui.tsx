@@ -1,8 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ArrowRight, Command, Github, Search } from "lucide-react";
+import { ArrowRight, Command, Search } from "lucide-react";
+import { AuthActions } from "./auth-actions";
 import { AuthCapture } from "./auth-capture";
-import { SignOutButton } from "./sign-out-button";
 import { ThemeToggle } from "./theme-toggle";
 import { cn } from "../lib/utils";
 import { navItems } from "../lib/data";
@@ -31,7 +31,7 @@ export function Button({ children, href, variant = "primary", className = "" }: 
 }
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <section className={cn("hairline rounded-lg bg-card/82 p-5 shadow-sm shadow-black/5 backdrop-blur-sm dark:bg-card/78", className)}>{children}</section>;
+  return <section className={cn("elevated-surface rounded-lg p-5", className)}>{children}</section>;
 }
 
 export function EmptyState({
@@ -75,7 +75,7 @@ export function AppShell({ children, current = "dashboard" }: { children: ReactN
   return (
     <div className="min-h-screen bg-background text-foreground">
       <AuthCapture />
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-border bg-card/70 p-4 backdrop-blur-xl lg:block">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-border bg-card/88 p-4 shadow-[10px_0_40px_rgba(0,0,0,0.08)] backdrop-blur-xl dark:bg-card/82 dark:shadow-[10px_0_48px_rgba(0,0,0,0.28)] lg:block">
         <div className="flex h-full flex-col">
           <Link href="/" className="flex items-center gap-3 rounded-md px-2 py-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-md bg-accent text-accent-foreground">
@@ -95,7 +95,7 @@ export function AppShell({ children, current = "dashboard" }: { children: ReactN
                   href={item.href}
                   className={cn(
                     "smooth-pop flex items-center gap-3 rounded-md px-3 py-2 text-sm",
-                    active ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+                    active ? "bg-muted text-foreground shadow-sm shadow-black/5" : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
                   )}
                 >
                   <item.icon className="h-4 w-4" />
@@ -121,24 +121,20 @@ export function AppShell({ children, current = "dashboard" }: { children: ReactN
 
 function TopBar() {
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-background/78 px-4 py-3 backdrop-blur-xl md:px-6 lg:px-10">
+    <header className="sticky top-0 z-20 border-b border-border bg-background/82 px-4 py-3 backdrop-blur-xl md:px-6 lg:px-10">
       <div className="flex items-center justify-between gap-3">
         <Link href="/" className="flex items-center gap-2 text-sm font-semibold lg:hidden">
           <Command className="h-4 w-4 text-accent" />
           Aegisure
         </Link>
-        <div className="hidden min-w-0 items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-muted-foreground md:flex">
+        <div className="hidden min-w-0 items-center gap-2 rounded-md border border-border bg-card/95 px-3 py-2 text-sm text-muted-foreground shadow-sm shadow-black/5 md:flex dark:shadow-black/20">
           <Search className="h-4 w-4" />
           <span>Search audit, provenance, policies...</span>
           <kbd className="ml-8 rounded border border-border px-1.5 py-0.5 text-[10px]">⌘K</kbd>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Button href="/auth" variant="secondary" className="hidden sm:inline-flex">
-            <Github className="h-4 w-4" />
-            Sign in
-          </Button>
-          <SignOutButton />
+          <AuthActions />
         </div>
       </div>
     </header>

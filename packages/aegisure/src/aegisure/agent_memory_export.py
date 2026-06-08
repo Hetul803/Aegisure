@@ -6,13 +6,16 @@ from .constitution import Constitution, constitution_for_repo, render_constituti
 
 
 EXPORT_TARGETS = (
-    "AEGIS.md",
+    "Aegisure.md",
     "AGENTS.md",
     "CLAUDE.md",
     ".cursorrules",
     ".clinerules",
     ".github/copilot-instructions.md",
 )
+CANONICAL_TARGET = "Aegisure.md"
+BEGIN_MARKER = "<!-- AEGISURE:BEGIN -->"
+END_MARKER = "<!-- AEGISURE:END -->"
 
 
 def _rules_block(constitution: Constitution) -> str:
@@ -29,6 +32,13 @@ def _test_block(constitution: Constitution) -> str:
 
 def _protected_block(constitution: Constitution) -> str:
     return "\n".join(f"- `{path}`" for path in constitution.protected_paths) or "- No protected paths detected yet."
+
+
+def _attribution_instruction(agent: str) -> str:
+    return (
+        "When you commit work you produced, use Aegisure commit tagging so attribution is declared, not guessed: "
+        f"`aegisure commit -m \"<message>\" --agent {agent} --prompt \"<prompt that produced this change>\"`."
+    )
 
 
 def build_memory_exports(constitution: Constitution) -> dict[str, str]:
@@ -56,6 +66,9 @@ def build_memory_exports(constitution: Constitution) -> dict[str, str]:
 
 ## Verification
 {shared['tests']}
+
+## Attribution
+{_attribution_instruction("codex")}
 """
     claude_md = f"""# Claude Code Memory
 
@@ -71,6 +84,9 @@ Before editing protected areas, ask for human review:
 
 Run or recommend these checks:
 {shared['tests']}
+
+Attribution:
+{_attribution_instruction("claude-code")}
 """
     cursor_rules = f"""You are an AI coding agent in {shared['repo']}.
 
@@ -84,6 +100,9 @@ Protected paths:
 
 Tests:
 {shared['tests']}
+
+Attribution:
+{_attribution_instruction("cursor")}
 """
     cline_rules = f"""# Cline/Roo Rules
 
@@ -99,6 +118,9 @@ Require approval:
 
 Verify with:
 {shared['tests']}
+
+Attribution:
+{_attribution_instruction("cline")} Use `--agent roo` instead when Roo produced the change.
 """
     copilot = f"""# GitHub Copilot Instructions
 
@@ -114,15 +136,55 @@ Protected paths:
 
 Verification:
 {shared['tests']}
+
+Attribution:
+{_attribution_instruction("copilot")}
 """
     return {
-        "AEGIS.md": aura_md,
+        "Aegisure.md": aura_md,
         "AGENTS.md": agent_md,
         "CLAUDE.md": claude_md,
         ".cursorrules": cursor_rules,
         ".clinerules": cline_rules,
         ".github/copilot-instructions.md": copilot,
     }
+
+
+def _managed_block(content: str) -> str:
+    return f"{BEGIN_MARKER}\n{content.rstrip()}\n{END_MARKER}\n"
+
+
+def _extract_managed_block(text: str) -> str | None:
+    if BEGIN_MARKER not in text or END_MARKER not in text:
+        return None
+    return text.split(BEGIN_MARKER, 1)[1].split(END_MARKER, 1)[0].strip()
+
+
+def _merge_export_content(target: str, previous: str | None, generated: str) -> str:
+    if target == CANONICAL_TARGET:
+        return generated
+    managed = _managed_block(generated)
+    if previous is None or not previous.strip():
+        return managed
+    if previous.strip() == generated.strip():
+        return managed
+    if BEGIN_MARKER in previous and END_MARKER in previous:
+        before = previous.split(BEGIN_MARKER, 1)[0].rstrip()
+        after = previous.split(END_MARKER, 1)[1].lstrip()
+        parts = [part for part in [before, managed.rstrip(), after.rstrip()] if part]
+        return "\n\n".join(parts) + "\n"
+    return previous.rstrip() + "\n\n" + managed
+
+
+def export_content_is_current(target: str, previous: str | None, generated: str) -> bool:
+    if previous is None:
+        return False
+    if target == CANONICAL_TARGET:
+        return previous == generated
+    managed = _extract_managed_block(previous)
+    if managed is not None:
+        return managed == generated.strip()
+    return previous.strip() == generated.strip()
 
 
 def write_memory_exports(repo_path: str | Path, *, overwrite: bool = True) -> list[dict[str, str | bool]]:
@@ -133,8 +195,9 @@ def write_memory_exports(repo_path: str | Path, *, overwrite: bool = True) -> li
         path = repo / target
         path.parent.mkdir(parents=True, exist_ok=True)
         previous = path.read_text(encoding="utf-8") if path.exists() else None
-        changed = previous != content
+        next_content = _merge_export_content(target, previous, content)
+        changed = previous != next_content
         if changed and (overwrite or previous is None):
-            path.write_text(content, encoding="utf-8")
+            path.write_text(next_content, encoding="utf-8")
         results.append({"path": str(path), "target": target, "changed": changed})
     return results

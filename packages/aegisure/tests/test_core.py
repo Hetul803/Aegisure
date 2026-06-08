@@ -39,7 +39,7 @@ def test_constitution_and_exports_are_idempotent(tmp_path: Path) -> None:
     assert first == second
     results = write_memory_exports(tmp_path)
     targets = {item["target"] for item in results}
-    assert {"AEGIS.md", "AGENTS.md", "CLAUDE.md", ".cursorrules", ".clinerules", ".github/copilot-instructions.md"} <= targets
+    assert {"Aegisure.md", "AGENTS.md", "CLAUDE.md", ".cursorrules", ".clinerules", ".github/copilot-instructions.md"} <= targets
     again = write_memory_exports(tmp_path)
     assert all("changed" in item for item in again)
 

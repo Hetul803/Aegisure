@@ -1,0 +1,28 @@
+name: Aegisure
+
+on:
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Aegisure
+        run: python -m pip install aegisure
+
+      - name: Scan PR changes
+        run: aegisure scan --changed --base origin/${{ github.base_ref }} --json

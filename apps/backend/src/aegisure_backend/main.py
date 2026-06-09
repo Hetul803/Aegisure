@@ -50,9 +50,10 @@ from .db import (
 from .security import verify_user
 
 app = FastAPI(title="Aegisure API", version="0.1.0")
+_allowed_origins = os.getenv("ALLOWED_ORIGINS") or os.getenv("AEGISURE_CORS_ORIGINS") or ""
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[origin.strip() for origin in os.getenv("AEGISURE_CORS_ORIGINS", "http://localhost:3000").split(",")],
+    allow_origins=[origin.strip() for origin in _allowed_origins.split(",") if origin.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

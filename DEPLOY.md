@@ -1,118 +1,115 @@
 # Aegisure Deploy Guide
 
-Aegisure deploys as three hosted pieces:
+This repo is a monorepo:
 
-- Web dashboard: Vercel, project root `apps/web`
-- FastAPI backend and GitHub webhook: Railway, repo root
-- Database and auth: Supabase Postgres + pgvector + Supabase Auth
+- Frontend: `apps/web` on Vercel
+- Backend/API/webhook: `apps/backend` on Railway
+- CLI package: `packages/aegisure`, not deployed by Vercel or Railway
+- Database/Auth: Supabase Postgres + Supabase Auth
 
-No real secrets belong in this repository. Use the names below exactly and paste real values only into Vercel, Railway, Supabase, or your local shell.
+Do not commit real secrets. Put real values only in Vercel, Railway, Supabase, or your local shell.
 
-## Supabase
+## 1. Supabase
 
 Supabase provides GitHub login, hosted Postgres, and pgvector.
 
-Aegisure uses the classic JWT-style Supabase keys:
+Aegisure uses the classic Supabase env names:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY` for server-side Supabase admin work if you add it later
-- `SUPABASE_JWT_SECRET` for FastAPI JWT verification
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_JWT_SECRET`
 
-Do not mix these with the newer `sb_publishable_` / `sb_secret_` naming in this codebase unless you intentionally migrate the frontend and backend together.
+Do not mix these with `sb_publishable_` / `sb_secret_` names unless you migrate the code intentionally.
 
-### Run migrations against Supabase
+### Run Migrations
 
-The migration enables pgvector with `CREATE EXTENSION IF NOT EXISTS vector`, creates the workspace-scoped tables, and turns on RLS policies. Run this from the repo root after replacing the placeholders:
+Run from the repo root after replacing placeholders:
 
 ```bash
 DATABASE_URL="postgresql+psycopg://postgres:[YOUR_PASSWORD]@db.[PROJECT_REF].supabase.co:5432/postgres" alembic upgrade head
 ```
 
-If Supabase reports that `vector` is unavailable, enable the Vector extension in the Supabase dashboard, then rerun the command.
+The migration includes:
 
-## Vercel Web Dashboard
+- `CREATE EXTENSION IF NOT EXISTS vector`
+- workspace-scoped tables
+- RLS enablement and workspace isolation policies
 
-Project root:
+If Supabase reports that `vector` is unavailable, enable the Vector extension in the Supabase dashboard and rerun the command.
+
+## 2. Vercel Frontend
+
+Create/import a Vercel project from this GitHub repo.
+
+Project settings:
 
 ```text
-repo root
+Root Directory: apps/web
+Framework Preset: Next.js
+Install Command: cd ../.. && pnpm install --frozen-lockfile
+Build Command: cd ../.. && pnpm --filter aegisure-web build
+Output Directory: .next
 ```
 
-Build command:
+These settings are also encoded in `apps/web/vercel.json`.
+
+Set exactly these Vercel env vars:
 
 ```bash
-pnpm --filter aegisure-web build
-```
-
-Required Vercel env vars:
-
-```bash
-NEXT_PUBLIC_AEGISURE_BACKEND_URL=https://api.aegisure.dev
-AEGISURE_BACKEND_URL=https://api.aegisure.dev
 NEXT_PUBLIC_SUPABASE_URL=https://[PROJECT_REF].supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=[SUPABASE_ANON_KEY]
+NEXT_PUBLIC_API_URL=https://[RAILWAY_BACKEND_DOMAIN]
 ```
 
-Optional Vercel env vars:
+Only `NEXT_PUBLIC_*` values belong in Vercel for this launch setup. Do not put GitHub App private keys, Supabase service-role keys, or LLM provider keys in Vercel.
 
-```bash
-NEXT_PUBLIC_POSTHOG_KEY=
-NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
+## 3. Railway Backend
+
+Create/import a Railway service from this GitHub repo.
+
+Project settings:
+
+```text
+Root Directory: apps/backend
+Builder: Nixpacks
+Start Command: uvicorn aegisure_backend.main:app --app-dir src --host 0.0.0.0 --port $PORT
 ```
 
-Development-only fallback:
+Railway config is included in:
 
-```bash
-AEGISURE_API_TOKEN=
-AEGISURE_WORKSPACE_ID=local
-```
+- `apps/backend/railway.json`
+- `apps/backend/Procfile`
+- `apps/backend/runtime.txt`
+- `apps/backend/requirements.txt`
 
-Use the fallback token only for local/test dashboards. Hosted production should rely on Supabase user sessions.
-
-## Railway Backend
-
-Railway should install from the repo root with `requirements.txt`. `Procfile` starts the API:
-
-```bash
-uvicorn aegisure_backend.main:app --app-dir apps/backend/src --host 0.0.0.0 --port $PORT
-```
-
-Required Railway env vars:
+Set exactly these Railway env vars:
 
 ```bash
 DATABASE_URL=postgresql+psycopg://postgres:[YOUR_PASSWORD]@db.[PROJECT_REF].supabase.co:5432/postgres
+SUPABASE_SERVICE_ROLE_KEY=[SUPABASE_SERVICE_ROLE_KEY]
 SUPABASE_JWT_SECRET=[SUPABASE_JWT_SECRET]
-AEGISURE_CORS_ORIGINS=https://aegisure.dev
 AEGISURE_GITHUB_APP_ID=[GITHUB_APP_ID]
-AEGISURE_GITHUB_APP_PRIVATE_KEY=[MULTILINE_PRIVATE_KEY_WITH_ESCAPED_NEWLINES_OR_REAL_MULTILINE_VALUE]
 AEGISURE_GITHUB_WEBHOOK_SECRET=[GITHUB_WEBHOOK_SECRET]
-```
-
-Local-only alternative for GitHub private key:
-
-```bash
-AEGISURE_GITHUB_APP_PRIVATE_KEY_PATH=/absolute/path/to/private-key.pem
+AEGISURE_GITHUB_APP_PRIVATE_KEY=[PASTE_THE_MULTILINE_PEM_CONTENTS_NOT_A_PATH]
+ALLOWED_ORIGINS=https://aegisure.dev
 ```
 
 Optional Railway env vars:
 
 ```bash
-AEGISURE_API_TOKEN=[DEV_ONLY_STATIC_TOKEN]
-AEGISURE_PROVIDED_DAILY_CAP_USD=0.25
-AEGISURE_ENABLE_SECOND_OPINION=false
 AEGISURE_ANTHROPIC_API_KEY=
-AEGISURE_ANTHROPIC_REVIEW_MODEL=claude-3-5-haiku-latest
 AEGISURE_OPENAI_API_KEY=
+AEGISURE_ENABLE_SECOND_OPINION=false
+AEGISURE_ANTHROPIC_REVIEW_MODEL=claude-3-5-haiku-latest
 AEGISURE_OPENAI_REVIEW_MODEL=gpt-4.1-mini
-AEGISURE_OLLAMA_BASE_URL=http://127.0.0.1:11434
-AEGISURE_OLLAMA_MODEL=llama3.2
+AEGISURE_PROVIDED_DAILY_CAP_USD=0.25
 SENTRY_DSN=
 ```
 
 Railway provides `PORT` automatically.
 
-## GitHub App
+## 4. GitHub App
 
 Required permissions:
 
@@ -126,22 +123,61 @@ Webhook events:
 
 - Pull request
 
-When you deploy, update these external URLs:
+## 5. Post-Deploy Wiring
 
-```text
-GitHub App Homepage URL: https://aegisure.dev
-GitHub App Webhook URL: https://api.aegisure.dev/github/webhook
-GitHub App callback URL if using direct OAuth: https://aegisure.dev/auth
-Supabase allowed redirect URL: https://aegisure.dev/auth
-Supabase allowed redirect URL: https://aegisure.dev/onboarding
-Supabase allowed redirect URL: https://aegisure.dev/dashboard
-Supabase local redirect URL: http://localhost:3000/auth
-Supabase local redirect URL: http://localhost:3000/onboarding
+After Vercel and Railway deploy successfully, update these three places.
+
+### A. Vercel Backend URL
+
+Set Vercel:
+
+```bash
+NEXT_PUBLIC_API_URL=https://<railway-backend>
 ```
 
-If you use Supabase’s GitHub provider, also add the Supabase callback URL shown in the Supabase dashboard to the GitHub OAuth app.
+Use the real Railway backend origin. Example with the public domain:
 
-## Local Webhook Test
+```bash
+NEXT_PUBLIC_API_URL=https://api.aegisure.dev
+```
+
+No trailing slash is required.
+
+### B. GitHub App Webhook URL
+
+Set the GitHub App webhook URL to:
+
+```text
+https://<railway-backend>/github/webhook
+```
+
+Example:
+
+```text
+https://api.aegisure.dev/github/webhook
+```
+
+### C. Supabase Allowed Redirect URLs
+
+Add the Vercel frontend URL to Supabase Auth allowed redirect URLs:
+
+```text
+https://aegisure.dev/auth
+https://aegisure.dev/onboarding
+https://aegisure.dev/dashboard
+```
+
+For local development, also allow:
+
+```text
+http://localhost:3000/auth
+http://localhost:3000/onboarding
+http://localhost:3000/dashboard
+```
+
+If you use Supabase's GitHub provider, also add the Supabase callback URL shown in the Supabase dashboard to the GitHub OAuth app.
+
+## 6. Local Webhook Test
 
 Use smee.io or another tunnel to forward GitHub webhooks to:
 
@@ -149,8 +185,8 @@ Use smee.io or another tunnel to forward GitHub webhooks to:
 http://127.0.0.1:8000/github/webhook
 ```
 
-Then set the GitHub App webhook URL to your tunnel URL during local testing.
+Then temporarily set the GitHub App webhook URL to your tunnel URL.
 
-## PyPI
+## 7. PyPI
 
 Do not publish from CI. See [PUBLISH.md](PUBLISH.md).

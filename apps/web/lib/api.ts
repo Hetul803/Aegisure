@@ -1,9 +1,9 @@
-const baseUrl = process.env.AEGISURE_BACKEND_URL || process.env.NEXT_PUBLIC_AEGISURE_BACKEND_URL || "http://127.0.0.1:8000";
+const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
 
 export async function backendGet<T>(path: string, fallback: T): Promise<T> {
   const { cookies } = await import("next/headers");
   const token = cookies().get("aegisure_token")?.value || process.env.AEGISURE_API_TOKEN || "";
-  if (!token) return fallback;
+  if (!token || !baseUrl) return fallback;
   try {
     const res = await fetch(`${baseUrl}${path}`, {
       headers: { authorization: `Bearer ${token}`, "x-aegisure-workspace": process.env.AEGISURE_WORKSPACE_ID || "local" },

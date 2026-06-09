@@ -131,9 +131,10 @@ export function AuditChatPanel({
     let answer = fallbackAnswer(text, grounded);
     let needsKey = false;
     const token = cookieToken();
-    if (token) {
+    const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
+    if (token && apiUrl) {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_AEGISURE_BACKEND_URL || "http://127.0.0.1:8000"}/audit/chat`, {
+        const res = await fetch(`${apiUrl}/audit/chat`, {
           method: "POST",
           headers: {
             "content-type": "application/json",

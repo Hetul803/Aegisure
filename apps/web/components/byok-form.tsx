@@ -16,7 +16,12 @@ export function ByokForm() {
       setStatus("Sign in first, then save a BYOK key.");
       return;
     }
-    const res = await fetch(`${process.env.NEXT_PUBLIC_AEGISURE_BACKEND_URL || "http://127.0.0.1:8000"}/settings/llm-key`, {
+    const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
+    if (!apiUrl) {
+      setStatus("Set NEXT_PUBLIC_API_URL so the dashboard can reach the backend.");
+      return;
+    }
+    const res = await fetch(`${apiUrl}/settings/llm-key`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
